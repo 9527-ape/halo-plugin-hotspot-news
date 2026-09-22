@@ -1,0 +1,34 @@
+# 角色模板：用于把热点新闻的查看/管理权限授予其他登录用户（可选）。
+# 匿名访客无需此模板——Halo 内置 role-template-public-apis 已对
+# api.plugin.halo.run 组的 GET/list 放开匿名访问。
+apiVersion: v1alpha1
+kind: Role
+metadata:
+  name: hotspot-news-role-view
+  labels:
+    halo.run/role-template: "true"
+  annotations:
+    rbac.authorization.halo.run/module: "热点摸鱼"
+    rbac.authorization.halo.run/display-name: "查看热点新闻"
+rules:
+  - apiGroups: ["api.plugin.halo.run"]
+    resources: ["hotspot-news", "hotspot-news/status"]
+    verbs: ["get", "list"]
+---
+apiVersion: v1alpha1
+kind: Role
+metadata:
+  name: hotspot-news-role-manage
+  labels:
+    halo.run/role-template: "true"
+  annotations:
+    rbac.authorization.halo.run/dependencies: '["hotspot-news-role-view"]'
+    rbac.authorization.halo.run/module: "热点摸鱼"
+    rbac.authorization.halo.run/display-name: "管理热点新闻"
+rules:
+  - apiGroups: ["api.plugin.halo.run"]
+    resources: ["hotspot-news"]
+    verbs: ["create", "update", "delete"]
+  - apiGroups: ["news.moyu.run"]
+    resources: ["hotspotnewsitems"]
+    verbs: ["get", "list", "create", "update", "delete"]

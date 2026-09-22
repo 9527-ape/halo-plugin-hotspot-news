@@ -1,0 +1,45 @@
+plugins {
+    id 'java'
+    // Halo 官方构建插件：编译期扫描 @Component 等注解并生成
+    // META-INF/plugin-components.idx，Halo 运行时靠该索引注册插件 Spring bean
+    id 'run.halo.plugin.devtools' version '0.8.0'
+}
+
+group = 'run.hotspotnews'
+version = '1.0.3'
+description = '热点摸鱼：微博热搜 + 新闻联播时政热点聚合插件'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://s01.oss.sonatype.org/content/repositories/releases' }
+    maven { url = 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
+    maven { url = 'https://repo.spring.io/milestone' }
+}
+
+dependencies {
+    // Halo 插件 API 的 BOM，版本与目标 Halo 保持一致
+    // 2.20.20 为 Java 17 字节码，可在 Halo 2.20+（Java 17/21 运行时）上运行
+    implementation platform('run.halo.tools.platform:plugin:2.20.20')
+    compileOnly 'run.halo.app:api'
+
+    // 响应式 HTTP 客户端（WebClient）——Halo 核心已提供 Spring WebFlux，仅编译期需要
+    compileOnly 'org.springframework.boot:spring-boot-starter-webflux'
+
+    testImplementation 'run.halo.app:api'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}

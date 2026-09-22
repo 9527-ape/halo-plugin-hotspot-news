@@ -1,0 +1,11 @@
+# 声明 AdditionalWebFilter 扩展点实现，Halo 由此将 MoyuRouteFilter
+# 挂载到核心 Web 过滤链，使 /moyu 短链入口生效。
+apiVersion: plugin.halo.run/v1alpha1
+kind: ExtensionDefinition
+metadata:
+  name: hotspot-news-moyu-route-filter
+spec:
+  className: run.hotspotnews.web.MoyuRouteFilter
+  extensionPointName: additional-webfilter
+  displayName: "热点摸鱼页面路由"
+  description: "将 /moyu 直接渲染为热点摸鱼页面，无需登录即可访问"

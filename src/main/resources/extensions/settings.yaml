@@ -1,0 +1,50 @@
+apiVersion: v1alpha1
+kind: Setting
+metadata:
+  name: hotspot-news-settings
+spec:
+  forms:
+    - group: basic
+      label: 基础设置
+      formSchema:
+        - $formkit: switch
+          name: weiboEnabled
+          label: 启用微博热搜
+          help: 关闭后将不再同步微博热搜榜
+          value: true
+        - $formkit: switch
+          name: lianboEnabled
+          label: 启用新闻联播
+          help: 关闭后将不再抓取《新闻联播》节目内容
+          value: true
+        - $formkit: number
+          name: intervalMinutes
+          label: 自动同步间隔（分钟）
+          value: 30
+          validation: required|min:5|max:1440
+        - $formkit: number
+          name: maxItemsPerSource
+          label: 每个来源保留条数
+          value: 50
+          validation: required|min:1|max:200
+        - $formkit: number
+          name: minHotValue
+          label: 微博热搜最低热度值
+          value: 0
+          help: 低于该热度值的热搜将被过滤，0 表示不过滤
+          validation: min:0
+        - $formkit: text
+          name: weiboApiUrl
+          label: 微博热搜接口地址
+          value: https://weibo.com/ajax/statuses/hot_band
+          help: 默认使用微博热搜榜 JSON 接口；如接口失效或需更换数据源，可替换为结构一致的接口
+        - $formkit: text
+          name: lianboPageUrl
+          label: 新闻联播栏目页地址
+          value: https://tv.cctv.com/lm/xwlb/
+          help: 央视网《新闻联播》栏目页，用于抓取节目与条目
+        - $formkit: textarea
+          name: userAgent
+          label: 请求 User-Agent
+          value: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36
+          help: 抓取外部站点时携带的浏览器 UA，可按需修改

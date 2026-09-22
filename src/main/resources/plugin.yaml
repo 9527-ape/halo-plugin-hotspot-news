@@ -1,0 +1,16 @@
+apiVersion: plugin.halo.run/v1alpha1
+kind: Plugin
+metadata:
+  name: hotspot-news
+spec:
+  version: "1.0.3"
+  requires: ">=2.20.0"
+  author:
+    name: "moyu-dev"
+  displayName: "热点摸鱼 · 时政热点聚合"
+  description: "聚合微博热搜与《新闻联播》时政热点，为日常上班人群提供摸鱼休闲时的快速资讯速览。"
+  settingName: hotspot-news-settings
+  configMapName: hotspot-news-configmap
+  license:
+    - name: "GPL-3.0"
+      url: "https://www.gnu.org/licenses/gpl-3.0.html"
