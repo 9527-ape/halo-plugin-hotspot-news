@@ -7,5 +7,5 @@ metadata:
 spec:
   className: run.hotspotnews.web.MoyuRouteFilter
   extensionPointName: additional-webfilter
-  displayName: "热点摸鱼页面路由"
-  description: "将 /moyu 直接渲染为热点摸鱼页面，无需登录即可访问"
+  displayName: "开心一刻页面路由"
+  description: "将 /moyu 直接渲染为开心一刻页面，无需登录即可访问"

@@ -26,7 +26,7 @@ import run.hotspotnews.service.NewsSyncService;
  *   <li>GET /hotspot-news/status —— 同步状态（匿名可访问）</li>
  *   <li>POST /hotspot-news/refresh —— 手动触发一次同步（需要登录，管理员）</li>
  * </ul>
- * <p>摸鱼页面入口为短链 {@code /moyu}，由 {@link MoyuRouteFilter} 直接渲染。</p>
+ * <p>开心一刻页面入口为短链 {@code /moyu}，由 {@link MoyuRouteFilter} 直接渲染。</p>
  */
 @Component
 public class NewsEndpoint implements CustomEndpoint {

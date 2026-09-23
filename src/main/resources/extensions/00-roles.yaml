@@ -8,8 +8,8 @@ metadata:
   labels:
     halo.run/role-template: "true"
   annotations:
-    rbac.authorization.halo.run/module: "热点摸鱼"
-    rbac.authorization.halo.run/display-name: "查看热点新闻"
+    rbac.authorization.halo.run/module: "开心一刻"
+    rbac.authorization.halo.run/display-name: "查看开心内容"
 rules:
   - apiGroups: ["api.plugin.halo.run"]
     resources: ["hotspot-news", "hotspot-news/status"]
@@ -23,8 +23,8 @@ metadata:
     halo.run/role-template: "true"
   annotations:
     rbac.authorization.halo.run/dependencies: '["hotspot-news-role-view"]'
-    rbac.authorization.halo.run/module: "热点摸鱼"
-    rbac.authorization.halo.run/display-name: "管理热点新闻"
+    rbac.authorization.halo.run/module: "开心一刻"
+    rbac.authorization.halo.run/display-name: "管理开心内容"
 rules:
   - apiGroups: ["api.plugin.halo.run"]
     resources: ["hotspot-news"]

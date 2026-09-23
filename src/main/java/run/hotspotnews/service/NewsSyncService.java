@@ -148,7 +148,7 @@ public class NewsSyncService {
                 int soup = count(limited, PluginSetting.SOURCE_SOUP);
                 statusRef.set(new SyncStatus(
                     Instant.now().toString(), joke, soup, limited.size(), null));
-                log.info("摸鱼内容同步完成：笑话 {} 条，鸡汤 {} 条", joke, soup);
+                log.info("开心内容同步完成：笑话 {} 条，鸡汤 {} 条", joke, soup);
             })
             .doOnError(e -> {
                 statusRef.set(new SyncStatus(
@@ -158,7 +158,7 @@ public class NewsSyncService {
                     statusRef.get().total(),
                     e.getMessage()
                 ));
-                log.warn("摸鱼内容持久化失败：{}", e.getMessage());
+                log.warn("开心内容持久化失败：{}", e.getMessage());
             })
             .onErrorResume(e -> Mono.empty());
     }
