@@ -40,8 +40,8 @@ public class NewsQueryService {
         }
         String specSource = item.getSpec().getSource();
         String expected = switch (source.toLowerCase()) {
-            case "weibo" -> "WEIBO";
-            case "lianbo" -> "XINWEN_LIANBO";
+            case "joke" -> "JOKE";
+            case "soup" -> "SOUP";
             default -> source.toUpperCase();
         };
         return expected.equalsIgnoreCase(specSource);

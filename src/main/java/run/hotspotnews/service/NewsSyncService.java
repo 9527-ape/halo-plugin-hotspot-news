@@ -9,6 +9,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -42,6 +44,9 @@ public class NewsSyncService {
 
     private final AtomicReference<SyncStatus> statusRef =
         new AtomicReference<>(new SyncStatus("", 0, 0, 0, null));
+
+    /** 同步互斥标志，防止定时与手动同步并发执行 */
+    private final AtomicBoolean syncing = new AtomicBoolean(false);
 
     public NewsSyncService(ReactiveExtensionClient client,
         ReactiveSettingFetcher settingFetcher,
@@ -89,11 +94,15 @@ public class NewsSyncService {
     }
 
     private Mono<Void> doSync(PluginSetting setting) {
+        // 互斥：避免定时同步与手动刷新并发执行，防止同名资源竞态
+        if (!syncing.compareAndSet(false, true)) {
+            return Mono.empty();
+        }
         List<NewsFetcher> enabled = new ArrayList<>();
         for (NewsFetcher fetcher : fetchers) {
-            if (PluginSetting.SOURCE_WEIBO.equals(fetcher.source()) && setting.weiboActive()) {
+            if (PluginSetting.SOURCE_JOKE.equals(fetcher.source()) && setting.jokeActive()) {
                 enabled.add(fetcher);
-            } else if (PluginSetting.SOURCE_LIANBO.equals(fetcher.source()) && setting.lianboActive()) {
+            } else if (PluginSetting.SOURCE_SOUP.equals(fetcher.source()) && setting.soupActive()) {
                 enabled.add(fetcher);
             }
         }
@@ -101,11 +110,16 @@ public class NewsSyncService {
             .flatMap(fetcher -> fetcher.fetch(webClient, setting))
             .flatMapIterable(list -> list)
             .collectList()
-            .flatMap(raws -> replaceAll(raws, setting));
+            .flatMap(raws -> replaceAll(raws, setting))
+            .doFinally(signal -> syncing.set(false));
     }
 
     /**
-     * 用最新抓取结果替换全部旧数据（先删后建，保证幂等）。
+     * 用最新抓取结果替换旧数据：先创建新条目（跳过已存在同名），
+     * 再删除不在新名单中的旧条目。
+     *
+     * <p>Halo 扩展客户端的索引是异步更新的，先删后建会遇到
+     * “Duplicate name detected”竞态，因此采用先建后删的顺序。</p>
      */
     private Mono<Void> replaceAll(List<RawNewsItem> raws, PluginSetting setting) {
         // 每个来源限制条数
@@ -115,33 +129,63 @@ public class NewsSyncService {
         for (List<RawNewsItem> list : grouped.values()) {
             limited.addAll(list.stream().limit(setting.maxItems()).toList());
         }
+        Set<String> newNames = limited.stream()
+            .map(this::newsName)
+            .collect(Collectors.toSet());
 
         return client.list(HotspotNewsItem.class, e -> true, Comparator.comparing(
                 e -> e.getMetadata().getName()))
             .collectList()
-            .flatMapMany(Flux::fromIterable)
-            .flatMap(client::delete)
-            .thenMany(Flux.fromIterable(limited).map(this::toExtension))
-            .flatMap(client::create)
-            .then()
+            .flatMap(existing -> {
+                Set<String> existingNames = existing.stream()
+                    .map(e -> e.getMetadata().getName())
+                    .collect(Collectors.toSet());
+                return createNew(limited, existingNames)
+                    .then(deleteStale(existing, newNames));
+            })
             .doOnSuccess(v -> {
-                int weibo = count(limited, PluginSetting.SOURCE_WEIBO);
-                int lianbo = count(limited, PluginSetting.SOURCE_LIANBO);
+                int joke = count(limited, PluginSetting.SOURCE_JOKE);
+                int soup = count(limited, PluginSetting.SOURCE_SOUP);
                 statusRef.set(new SyncStatus(
-                    Instant.now().toString(), weibo, lianbo, limited.size(), null));
-                log.info("热点新闻同步完成：微博 {} 条，新闻联播 {} 条", weibo, lianbo);
+                    Instant.now().toString(), joke, soup, limited.size(), null));
+                log.info("摸鱼内容同步完成：笑话 {} 条，鸡汤 {} 条", joke, soup);
             })
             .doOnError(e -> {
                 statusRef.set(new SyncStatus(
                     statusRef.get().lastSyncAt(),
-                    statusRef.get().weiboCount(),
-                    statusRef.get().lianboCount(),
+                    statusRef.get().jokeCount(),
+                    statusRef.get().soupCount(),
                     statusRef.get().total(),
                     e.getMessage()
                 ));
-                log.warn("热点新闻持久化失败：{}", e.getMessage());
+                log.warn("摸鱼内容持久化失败：{}", e.getMessage());
             })
             .onErrorResume(e -> Mono.empty());
+    }
+
+    /** 创建新条目（已存在同名的跳过），失败的单条跳过不中断整体。 */
+    private Mono<Void> createNew(List<RawNewsItem> limited, Set<String> existingNames) {
+        return Flux.fromIterable(limited)
+            .filter(raw -> !existingNames.contains(newsName(raw)))
+            .map(this::toExtension)
+            .flatMap(item -> attempt(client.create(item)))
+            .then();
+    }
+
+    /** 删除不在新名单中的旧条目，失败的单条跳过不中断整体。 */
+    private Mono<Void> deleteStale(List<HotspotNewsItem> existing, Set<String> newNames) {
+        return Flux.fromIterable(existing)
+            .filter(item -> !newNames.contains(item.getMetadata().getName()))
+            .flatMap(item -> attempt(client.delete(item)))
+            .then();
+    }
+
+    private <E extends run.halo.app.extension.Extension> Mono<Void> attempt(Mono<E> op) {
+        return op.then()
+            .onErrorResume(e -> {
+                log.warn("同步操作失败（已跳过）：{}", e.getMessage());
+                return Mono.empty();
+            });
     }
 
     private static int count(List<RawNewsItem> items, String source) {
@@ -173,7 +217,8 @@ public class NewsSyncService {
 
     /** 依据内容生成稳定的资源名称（仅小写字母、数字与 -）。 */
     private String newsName(RawNewsItem raw) {
-        return "hotspot-" + sha256(raw.source() + "|" + raw.title() + "|" + raw.url()).substring(0, 24);
+        return "hotspot-" + sha256(
+            raw.source() + "|" + raw.title() + "|" + raw.summary()).substring(0, 24);
     }
 
     private String sha256(String input) {
@@ -193,8 +238,8 @@ public class NewsSyncService {
     /** 同步状态（内存态）。 */
     public record SyncStatus(
         String lastSyncAt,
-        int weiboCount,
-        int lianboCount,
+        int jokeCount,
+        int soupCount,
         int total,
         String error
     ) {

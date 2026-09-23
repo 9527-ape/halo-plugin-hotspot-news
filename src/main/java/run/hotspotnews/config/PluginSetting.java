@@ -1,5 +1,7 @@
 package run.hotspotnews.config;
 
+import java.util.List;
+
 /**
  * 插件配置。与 {@code extensions/settings.yaml} 中 group 为 {@code basic} 的表单一一对应。
  *
@@ -7,20 +9,21 @@ package run.hotspotnews.config;
  * 所有字段均可为空，使用时需通过本类提供的带默认值方法获取生效值。</p>
  */
 public record PluginSetting(
-    Boolean weiboEnabled,
-    Boolean lianboEnabled,
+    Boolean jokeEnabled,
+    Boolean soupEnabled,
     Integer intervalMinutes,
     Integer maxItemsPerSource,
-    Integer minHotValue,
-    String weiboApiUrl,
-    String lianboPageUrl,
+    String soupApiBase,
     String userAgent
 ) {
 
     public static final String GROUP = "basic";
 
-    public static final String SOURCE_WEIBO = "WEIBO";
-    public static final String SOURCE_LIANBO = "XINWEN_LIANBO";
+    public static final String SOURCE_JOKE = "JOKE";
+    public static final String SOURCE_SOUP = "SOUP";
+
+    /** 一言句子库分类：d=文学，i=诗词，k=哲学 */
+    public static final List<String> DEFAULT_SOUP_CATEGORIES = List.of("d", "i", "k");
 
     public static PluginSetting defaultSetting() {
         return new PluginSetting(
@@ -28,20 +31,18 @@ public record PluginSetting(
             true,
             30,
             50,
-            0,
-            "https://weibo.com/ajax/statuses/hot_band",
-            "https://tv.cctv.com/lm/xwlb/",
+            "https://cdn.jsdelivr.net/gh/hitokoto-osc/sentences-bundle@master/sentences/",
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
                 + "Chrome/126.0.0.0 Safari/537.36"
         );
     }
 
-    public boolean weiboActive() {
-        return weiboEnabled == null || weiboEnabled;
+    public boolean jokeActive() {
+        return jokeEnabled == null || jokeEnabled;
     }
 
-    public boolean lianboActive() {
-        return lianboEnabled == null || lianboEnabled;
+    public boolean soupActive() {
+        return soupEnabled == null || soupEnabled;
     }
 
     public int syncInterval() {
@@ -49,26 +50,24 @@ public record PluginSetting(
     }
 
     public int maxItems() {
-        return maxItemsPerSource == null ? 20 : maxItemsPerSource;
+        return maxItemsPerSource == null ? 20 : Math.max(1, maxItemsPerSource);
     }
 
-    public int minHot() {
-        return minHotValue == null ? 0 : Math.max(0, minHotValue);
+    /** 一言句子库 CDN 基地址（以 / 结尾）。 */
+    public String soupApiBase() {
+        if (soupApiBase == null || soupApiBase.isBlank()) {
+            return defaultSetting().soupApiBase;
+        }
+        String base = soupApiBase.trim();
+        return base.endsWith("/") ? base : base + "/";
     }
 
-    public String weiboApi() {
-        return isBlank(weiboApiUrl) ? defaultSetting().weiboApiUrl : weiboApiUrl.trim();
-    }
-
-    public String lianboPage() {
-        return isBlank(lianboPageUrl) ? defaultSetting().lianboPageUrl : lianboPageUrl.trim();
+    public List<String> soupCategories() {
+        return DEFAULT_SOUP_CATEGORIES;
     }
 
     public String ua() {
-        return isBlank(userAgent) ? defaultSetting().userAgent : userAgent.trim();
-    }
-
-    private static boolean isBlank(String s) {
-        return s == null || s.isBlank();
+        return userAgent == null || userAgent.isBlank()
+            ? defaultSetting().userAgent : userAgent.trim();
     }
 }

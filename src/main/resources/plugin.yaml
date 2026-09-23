@@ -3,12 +3,12 @@ kind: Plugin
 metadata:
   name: hotspot-news
 spec:
-  version: "1.0.3"
+  version: "1.2.1"
   requires: ">=2.20.0"
   author:
     name: "moyu-dev"
-  displayName: "热点摸鱼 · 时政热点聚合"
-  description: "聚合微博热搜与《新闻联播》时政热点，为日常上班人群提供摸鱼休闲时的快速资讯速览。"
+  displayName: "摸鱼一刻 · 笑话与鸡汤"
+  description: "上班摸鱼专用：内置精选笑话集 + 一言心灵鸡汤，每次同步随机换一批，支持一键伪装成工作文档。"
   settingName: hotspot-news-settings
   configMapName: hotspot-news-configmap
   license:

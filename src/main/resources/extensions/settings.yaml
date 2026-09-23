@@ -8,41 +8,31 @@ spec:
       label: 基础设置
       formSchema:
         - $formkit: switch
-          name: weiboEnabled
-          label: 启用微博热搜
-          help: 关闭后将不再同步微博热搜榜
+          name: jokeEnabled
+          label: 启用笑话
+          help: 关闭后将不再展示内置笑话集内容
           value: true
         - $formkit: switch
-          name: lianboEnabled
-          label: 启用新闻联播
-          help: 关闭后将不再抓取《新闻联播》节目内容
+          name: soupEnabled
+          label: 启用心灵鸡汤
+          help: 关闭后将不再同步一言（hitokoto）句子
           value: true
         - $formkit: number
           name: intervalMinutes
           label: 自动同步间隔（分钟）
           value: 30
+          help: 每到间隔时间自动换一批笑话与鸡汤
           validation: required|min:5|max:1440
         - $formkit: number
           name: maxItemsPerSource
           label: 每个来源保留条数
           value: 50
-          validation: required|min:1|max:200
-        - $formkit: number
-          name: minHotValue
-          label: 微博热搜最低热度值
-          value: 0
-          help: 低于该热度值的热搜将被过滤，0 表示不过滤
-          validation: min:0
+          validation: required|min:1|max:100
         - $formkit: text
-          name: weiboApiUrl
-          label: 微博热搜接口地址
-          value: https://weibo.com/ajax/statuses/hot_band
-          help: 默认使用微博热搜榜 JSON 接口；如接口失效或需更换数据源，可替换为结构一致的接口
-        - $formkit: text
-          name: lianboPageUrl
-          label: 新闻联播栏目页地址
-          value: https://tv.cctv.com/lm/xwlb/
-          help: 央视网《新闻联播》栏目页，用于抓取节目与条目
+          name: soupApiBase
+          label: 一言句子库地址
+          value: https://cdn.jsdelivr.net/gh/hitokoto-osc/sentences-bundle@master/sentences/
+          help: 心灵鸡汤数据源（hitokoto sentences-bundle CDN），每次同步随机取文学/诗词/哲学一类
         - $formkit: textarea
           name: userAgent
           label: 请求 User-Agent

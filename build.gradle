@@ -6,8 +6,8 @@ plugins {
 }
 
 group = 'run.hotspotnews'
-version = '1.0.3'
-description = '热点摸鱼：微博热搜 + 新闻联播时政热点聚合插件'
+version = '1.2.1'
+description = '摸鱼一刻：内置笑话集 + 一言心灵鸡汤插件'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
